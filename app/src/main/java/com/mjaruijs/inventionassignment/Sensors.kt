@@ -2,10 +2,9 @@ package com.mjaruijs.inventionassignment
 
 import android.hardware.*
 import android.hardware.SensorManager.SENSOR_DELAY_FASTEST
-import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import java.text.DecimalFormat
 
-class Sensors(private val sensorManager: SensorManager, private val callback: ((String) -> Unit)?) : SensorEventListener2 {
+class Sensors(private val sensorManager: SensorManager) : SensorEventListener2 {
 
     private val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     private val gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
@@ -14,8 +13,8 @@ class Sensors(private val sensorManager: SensorManager, private val callback: ((
     private val timers = LongArray(3)
     private val decimalFormat = DecimalFormat("#.####")
 
-    var values = ""
-    var delay = 10
+    var values = "" // The variable in which the readings will be stored
+    var delay = 10 // The delay between two readings in ms.
 
     override fun onSensorChanged(event: SensorEvent) {
         val index = when (event.sensor.type) {
@@ -25,6 +24,7 @@ class Sensors(private val sensorManager: SensorManager, private val callback: ((
             else -> return
         }
 
+        // Once every few ms, take a reading from the sensors and store it in the designated variable
         if (System.currentTimeMillis() - timers[index] > delay) {
             timers[index] = System.currentTimeMillis()
             val type = when (index) {
@@ -42,12 +42,6 @@ class Sensors(private val sensorManager: SensorManager, private val callback: ((
             }
 
             values += "!"
-
-            callback?.invoke(values)
-
-            if (callback != null) {
-                values = ""
-            }
         }
     }
 
@@ -55,8 +49,10 @@ class Sensors(private val sensorManager: SensorManager, private val callback: ((
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
+    /**
+     * Register the sensors needed.
+     */
     fun start(enabledSensors: BooleanArray) {
-
         if (enabledSensors[0]) {
             sensorManager.registerListener(this, accelerometer, SENSOR_DELAY_FASTEST)
         }
@@ -70,6 +66,9 @@ class Sensors(private val sensorManager: SensorManager, private val callback: ((
         }
     }
 
+    /**
+     * Unregister the sensors
+     */
     fun stop() {
         sensorManager.unregisterListener(this)
         if (values.isNotEmpty() && values[values.length - 1] == '!') {
