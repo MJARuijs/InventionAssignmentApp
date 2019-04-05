@@ -2,6 +2,7 @@ package com.mjaruijs.inventionassignment
 
 import android.content.Context
 import android.hardware.SensorManager
+import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -9,12 +10,13 @@ import android.os.Vibrator
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 import java.lang.Exception
+import java.net.DatagramSocket
+import java.net.InetAddress
 
 class MainActivity : AppCompatActivity() {
 
-    // Address and port for the server. CHANGE THESE ACCORDING TO THE SERVER
+    // port for the server. CHANGE THIS ACCORDING TO THE SERVER
     private companion object {
-        private const val SERVER_ADDRESS = "192.168.178.18"
         private const val SERVER_PORT = 8081
     }
 
@@ -46,6 +48,20 @@ class MainActivity : AppCompatActivity() {
             val server = Server(8080, ::onRead)
             server.start()
         }.start()
+
+        getIPAddress()
+    }
+
+    /**
+     * Ping the Google servers to get the IP address of this phone.
+     */
+    private fun getIPAddress() {
+        Thread {
+            val socket = DatagramSocket()
+            socket.connect(InetAddress.getByName("8.8.8.8"), 10002)
+            ip_address.append(socket.localAddress.hostAddress)
+            socket.close()
+        }.start()
     }
 
     /**
@@ -69,7 +85,6 @@ class MainActivity : AppCompatActivity() {
         accelerometer_checkbox.isEnabled = false
         magnetometer_checkbox.isEnabled = false
         gyroscope_checkbox.isEnabled = false
-        stream_checkbox.isEnabled = false
 
         Toast.makeText(applicationContext, "Starting!", Toast.LENGTH_SHORT).show()
         start()
@@ -84,7 +99,6 @@ class MainActivity : AppCompatActivity() {
         accelerometer_checkbox.isEnabled = true
         magnetometer_checkbox.isEnabled = true
         gyroscope_checkbox.isEnabled = true
-        stream_checkbox.isEnabled = true
 
         Toast.makeText(applicationContext, "Stopping!", Toast.LENGTH_SHORT).show()
         stop()
@@ -97,7 +111,12 @@ class MainActivity : AppCompatActivity() {
         if (!started) {
 
             // Vibrate for a moment to let the user know a measurement is starting
-            vibrator.vibrate(VibrationEffect.createOneShot(400, VibrationEffect.DEFAULT_AMPLITUDE))
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(400, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                vibrator.vibrate(400)
+            }
 
             // Wait for the vibration to finish. Otherwise, it might influence the data
             Thread.sleep(500)
@@ -124,7 +143,11 @@ class MainActivity : AppCompatActivity() {
      */
     private fun stop() {
         if (started) {
-            vibrator.vibrate(VibrationEffect.createOneShot(800, VibrationEffect.DEFAULT_AMPLITUDE))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(800, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                vibrator.vibrate(800)
+            }
 
             thread.join()
             sensors.stop()
