@@ -12,6 +12,12 @@ import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
 
+    // Address and port for the server. CHANGE THESE ACCORDING TO THE SERVER
+    private companion object {
+        private const val SERVER_ADDRESS = "192.168.178.18"
+        private const val SERVER_PORT = 8081
+    }
+
     private lateinit var thread: Thread
     private lateinit var sensors: Sensors
 
@@ -89,16 +95,12 @@ class MainActivity : AppCompatActivity() {
      */
     private fun start() {
         if (!started) {
-            if (start_delay.text?.isNotEmpty()!!) {
-                val startDelay = start_delay.text.toString().toLong()
-                Thread.sleep(startDelay)
-            }
 
             // Vibrate for a moment to let the user know a measurement is starting
             vibrator.vibrate(VibrationEffect.createOneShot(400, VibrationEffect.DEFAULT_AMPLITUDE))
 
             // Wait for the vibration to finish. Otherwise, it might influence the data
-            Thread.sleep(400)
+            Thread.sleep(500)
             thread = Thread {
 
                 sensors = Sensors(getSystemService(Context.SENSOR_SERVICE) as SensorManager)
@@ -141,7 +143,8 @@ class MainActivity : AppCompatActivity() {
     private fun sendData(values: String) {
         Thread {
             try {
-                val client = Client("145.94.165.161", 8081)
+                val address = server_address.text.toString()
+                val client = Client(address, SERVER_PORT)
                 client.write(values)
                 client.close()
             } catch(e: Exception) {
